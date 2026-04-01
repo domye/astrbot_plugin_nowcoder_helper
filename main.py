@@ -128,19 +128,16 @@ class NowcoderHelperPlugin(Star):
         """插件初始化"""
         logger.info("Nowcoder Helper Plugin initialized")
 
-    @filter.command("牛客")
+    @filter.regex(r'^牛客')
     async def nowcoder(self, event: AstrMessageEvent):
-        """智能获取牛客文章。用法: /牛客 <关键词> [筛选类型] [排序方式]"""
+        """智能获取牛客文章。用法: 牛客 <关键词> [筛选类型] [排序方式]"""
         sender_id = event.get_sender_id()
-        # AstrBot 的 message_str 包含完整消息（包括命令）
-        # 需要去掉命令前缀 '/牛客' 或 '牛客'
+        # 获取完整消息
         full_msg = event.message_str.strip()
-        if full_msg.startswith('/牛客'):
-            msg = full_msg[3:].strip()
-        elif full_msg.startswith('牛客'):
+        # 去掉命令前缀 '牛客'
+        if full_msg.startswith('牛客'):
             msg = full_msg[2:].strip()
         else:
-            # 如果都没有，说明可能有其他格式，直接使用
             msg = full_msg
 
         # 检查是否有未完成的会话
@@ -155,16 +152,16 @@ class NowcoderHelperPlugin(Star):
             yield event.plain_result(
                 "📖 牛客文章助手\n\n"
                 "用法:\n"
-                "/牛客 <链接> - 解析文章\n"
-                "/牛客 <关键词> - 搜索文章\n"
-                "/牛客 <关键词> <筛选> - 筛选类型\n"
-                "/牛客 <关键词> 最新 - 最新排序\n\n"
+                "牛客 <链接> - 解析文章\n"
+                "牛客 <关键词> - 搜索文章\n"
+                "牛客 <关键词> <筛选> - 筛选类型\n"
+                "牛客 <关键词> 最新 - 最新排序\n\n"
                 f"筛选类型: {tag_types}\n"
                 "排序方式: 最新\n\n"
                 "示例:\n"
-                "/牛客 https://www.nowcoder.com/discuss/123456\n"
-                "/牛客 阿里 面经\n"
-                "/牛客 字节 最新"
+                "牛客 https://www.nowcoder.com/discuss/123456\n"
+                "牛客 阿里 面经\n"
+                "牛客 字节 最新"
             )
             return
 
