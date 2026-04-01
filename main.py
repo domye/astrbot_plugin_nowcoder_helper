@@ -75,10 +75,19 @@ class NowcoderHelperPlugin(Star):
         logger.info("Nowcoder Helper Plugin initialized")
 
     @filter.command("牛客")
-    async def nowcoder(self, event: AstrMessageEvent, query: str = ""):
+    async def nowcoder(self, event: AstrMessageEvent):
         """智能获取牛客文章。用法: /牛客 <关键词> [筛选类型] [排序方式]"""
         sender_id = event.get_sender_id()
-        msg = query.strip()
+        # AstrBot 的 message_str 包含完整消息（包括命令）
+        # 需要去掉命令前缀 '/牛客' 或 '牛客'
+        full_msg = event.message_str.strip()
+        if full_msg.startswith('/牛客'):
+            msg = full_msg[3:].strip()
+        elif full_msg.startswith('牛客'):
+            msg = full_msg[2:].strip()
+        else:
+            # 如果都没有，说明可能有其他格式，直接使用
+            msg = full_msg
 
         # 检查是否有未完成的会话
         sessions = self._load_sessions()
