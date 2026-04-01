@@ -22,28 +22,9 @@ RE_NOWCODER_URL = re.compile(r'https?://www\.nowcoder\.com/(discuss/\d+|feed/mai
 def format_article_text(article: Article) -> str:
     """将文章转换为简洁的文本格式（不含图片）"""
     lines = [
-        f"📄 {article.title or '无标题'}\n\n",
-        f"👤 {article.author or '未知'}",
+        f"{article.title or '无标题'}\n\n",
+        article.content or '无内容'
     ]
-    if article.identity:
-        lines.append(f" | {article.identity}")
-    if article.post_time:
-        lines.append(f"\n🕐 {article.post_time}")
-    lines.append(f"\n🔗 {article.url}")
-
-    stats = []
-    if article.view_count:
-        stats.append(f"👁 {article.view_count}")
-    if article.like_count:
-        stats.append(f"👍 {article.like_count}")
-    if article.comment_count:
-        stats.append(f"💬 {article.comment_count}")
-    if stats:
-        lines.append(f"\n{' '.join(stats)}")
-
-    lines.append("\n\n" + "─" * 20 + "\n\n")
-    lines.append(article.content or '无内容')
-
     return ''.join(lines)
 
 
@@ -54,9 +35,8 @@ def build_article_message(article: Article):
     if not article.feed_images:
         return text, []
 
-    chain = [Comp.Plain(text), Comp.Plain("\n\n📎 图片:")]
+    chain = [Comp.Plain(text), Comp.Plain("\n")]
     for img_url in article.feed_images:
-        chain.append(Comp.Plain("\n"))
         chain.append(Comp.Image.fromURL(img_url))
 
     return None, chain
