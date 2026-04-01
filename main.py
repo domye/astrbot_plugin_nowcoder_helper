@@ -60,7 +60,7 @@ class NowcoderHelperPlugin(Star):
         """确保数据目录存在"""
         self.data_path.mkdir(parents=True, exist_ok=True)
         if not self.sessions_file.exists():
-            self.sessions_file.write_text(json.dumps({}, encoding='utf-8'))
+            self.sessions_file.write_text(json.dumps({}), encoding='utf-8')
 
     def _load_sessions(self) -> dict:
         """加载会话状态"""
