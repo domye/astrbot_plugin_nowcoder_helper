@@ -12,7 +12,7 @@ from astrbot.core.utils.session_waiter import session_waiter, SessionController
 from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 import astrbot.api.message_components as Comp
 
-from .services.api_client_async import fetch_article, fetch_search_results
+from .services.api_client_async import fetch_article, fetch_search_results, close_session
 from .services.models import Article, SearchResult
 
 # URL 正则
@@ -258,4 +258,5 @@ class NowcoderHelperPlugin(Star):
 
     async def terminate(self):
         """插件销毁"""
+        await close_session()
         logger.info("Nowcoder Helper Plugin terminated")
