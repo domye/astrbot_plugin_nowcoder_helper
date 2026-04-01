@@ -31,14 +31,6 @@ def format_article_text(article: Article) -> str:
     return ''.join(lines)
 
 
-def extract_images_from_content(content: str) -> list:
-    """从 Markdown 内容中提取图片链接"""
-    import re
-    # 匹配 Markdown 图片格式 ![alt](url)
-    pattern = re.compile(r'!\[.*?\]\((https?://[^)]+)\)')
-    return pattern.findall(content)
-
-
 def remove_images_from_content(content: str) -> str:
     """从 Markdown 内容中移除图片链接"""
     import re
@@ -47,28 +39,62 @@ def remove_images_from_content(content: str) -> str:
     return pattern.sub('', content)
 
 
-def build_article_message(article: Article):
-    """构建文章消息（包含图片则发送图片）"""
-    # 从 feed_images 和 content 中提取所有图片
-    all_images = list(article.feed_images or [])
-    content_images = extract_images_from_content(article.content or '')
+def build_message_chain_from_markdown(content: str):
+    """从 Markdown 内容构建消息链（保留图片位置）"""
+    import re
+    chain = []
+    # 匹配 Markdown 图片格式 ![alt](url)
+    pattern = re.compile(r'!\[.*?\]\((https?://[^)]+)\)')
 
-    # 合并图片列表（去重）
-    for img_url in content_images:
-        if img_url not in all_images:
-            all_images.append(img_url)
+    last_end = 0
+    for match in pattern.finditer(content):
+        # 添加图片前的文本
+        text_before = content[last_end:match.start()]
+        if text_before:
+            chain.append(Comp.Plain(text_before))
 
-    # 移除 content 中的图片 Markdown 链接
-    clean_content = remove_images_from_content(article.content or '无内容')
-    text = f"{article.title or '无标题'}\n\n{clean_content}"
-
-    if not all_images:
-        return text, []
-
-    # 构建消息链：文本 + 图片
-    chain = [Comp.Plain(text), Comp.Plain("\n")]
-    for img_url in all_images:
+        # 添加图片组件
+        img_url = match.group(1)
         chain.append(Comp.Image.fromURL(img_url))
+
+        last_end = match.end()
+
+    # 添加最后的文本
+    text_after = content[last_end:]
+    if text_after:
+        chain.append(Comp.Plain(text_after))
+
+    return chain
+
+
+def build_article_message(article: Article):
+    """构建文章消息"""
+    title = article.title or '无标题'
+
+    # Feed 类型：过滤 content 中的表情包，只保留 feed_images（末尾的真正图片）
+    if article.article_type == 'feed':
+        clean_content = remove_images_from_content(article.content or '无内容')
+        text = f"{title}\n\n{clean_content}"
+        images = article.feed_images or []
+
+        if not images:
+            return text, []
+
+        # 文本 + 末尾图片
+        chain = [Comp.Plain(text), Comp.Plain("\n")]
+        for img_url in images:
+            chain.append(Comp.Image.fromURL(img_url))
+        return None, chain
+
+    # Discuss 类型：保留图片在文字中的原始位置
+    content = article.content or '无内容'
+    full_content = f"{title}\n\n{content}"
+
+    # 构建消息链（文本和图片混合）
+    chain = build_message_chain_from_markdown(full_content)
+
+    if not chain:
+        return full_content, []
 
     return None, chain
 
