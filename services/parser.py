@@ -158,7 +158,6 @@ def parse_discuss_api_data(data: dict, article_id: str) -> dict:
 
 def parse_search_html(html: str, keyword: str, page: int) -> SearchResult:
     """从搜索页面HTML提取结果"""
-    import logging
     items = []
 
     # 提取feed文章
@@ -169,7 +168,7 @@ def parse_search_html(html: str, keyword: str, page: int) -> SearchResult:
             id=uuid, title=title,
             url='', article_type='feed'
         ))
-        logging.warning(f"DEBUG HTML Feed: uuid={uuid}, title={title}")
+        print(f"DEBUG HTML Feed: uuid={uuid}, title={title}")
 
     # 提取discuss文章
     for aid in set(RE_URL_DISCUSS.findall(html)):
@@ -179,20 +178,19 @@ def parse_search_html(html: str, keyword: str, page: int) -> SearchResult:
             id=aid, title=title,
             url='', article_type='discuss'
         ))
-        logging.warning(f"DEBUG HTML Discuss: aid={aid}, title={title}")
+        print(f"DEBUG HTML Discuss: aid={aid}, title={title}")
 
     # 总页数
     pager_m = RE_PAGER.search(html)
     pages = max(map(int, RE_PAGE_NUM.findall(pager_m.group(0))), default=0) if pager_m else 0
 
-    logging.warning(f"DEBUG HTML Total items: {len(items)}")
+    print(f"DEBUG HTML Total items: {len(items)}")
 
     return SearchResult(keyword=unquote(keyword), page=page, items=items, total_pages=pages)
 
 
 def parse_search_api_data(data: dict, keyword: str, page: int) -> SearchResult:
     """从搜索API响应提取结果"""
-    import logging
     items = []
     data_obj = data.get('data', {})
 
@@ -203,10 +201,11 @@ def parse_search_api_data(data: dict, keyword: str, page: int) -> SearchResult:
         if not isinstance(rd, dict):
             continue
 
-        # 调试：输出第一条记录的完整数据结构
+        # 调试：输出第二条记录的完整数据结构
         if idx == 1:  # 第二条记录
-            logging.warning(f"DEBUG Record 1 keys: {rd.keys()}")
-            logging.warning(f"DEBUG Record 1 data: {rd}")
+            print(f"\n=== DEBUG API Record 1 ===")
+            print(f"Record keys: {rd.keys()}")
+            print(f"Record data: {rd}")
 
         # 按优先级提取数据，确保每个候选都是字典
         candidates = [rd.get('momentData'), rd.get('subjectData'), rd.get('contentData')]
@@ -215,8 +214,8 @@ def parse_search_api_data(data: dict, keyword: str, page: int) -> SearchResult:
             continue
 
         if idx == 1:
-            logging.warning(f"DEBUG Selected src keys: {src.keys()}")
-            logging.warning(f"DEBUG Selected src: {src}")
+            print(f"Selected src keys: {src.keys()}")
+            print(f"Selected src: {src}")
 
         # 尝试多个可能的ID字段
         # 1. subjectId / discussId (discuss类型)
@@ -233,7 +232,7 @@ def parse_search_api_data(data: dict, keyword: str, page: int) -> SearchResult:
         # 过滤掉空值，取第一个有效的
         item_id = next((id for id in possible_ids if id), None)
         if not item_id:
-            logging.warning(f"No valid ID found in record: {rd.keys()}")
+            print(f"No valid ID found in record: {rd.keys()}")
             continue
 
         # 判断文章类型：feed 的 id 包含字母（十六进制），discuss 的 id 是纯数字
