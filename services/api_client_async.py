@@ -180,29 +180,40 @@ async def fetch_search_results(keyword: str, page: int = 1, log_id: str = None, 
         match = RE_INITIAL_STATE.search(html)
         if match:
             state = match.group(1)
-            result.log_id = (RE_LOG_ID.search(state) or ['', ''])[1]
-            result.session_id = (RE_SESSION_ID.search(state) or ['', ''])[1]
+            log_match = RE_LOG_ID.search(state)
+            session_match = RE_SESSION_ID.search(state)
+            if log_match:
+                result.log_id = log_match.group(1)
+            if session_match:
+                result.session_id = session_match.group(1)
 
-        if tag_param or order:
-            await random_delay()
-            payload = {
-                "type": "all", "query": keyword, "page": 1, "tag": tag_param, "order": order,
-                "gioParams": {
-                    "logid_var": result.log_id or '', "sessionID_var": result.session_id or '',
-                    "searchFrom_var": "搜索页输入框", "searchEnter_var": "主站"
-                }
+        # 如果没有筛选条件，直接返回HTML解析结果
+        if not tag_param and not order:
+            return result
+
+        # 有筛选条件，需要调用API
+        await random_delay()
+        payload = {
+            "type": "all", "query": keyword, "page": 1, "tag": tag_param, "order": order,
+            "gioParams": {
+                "logid_var": result.log_id or '', "sessionID_var": result.session_id or '',
+                "searchFrom_var": "搜索页输入框", "searchEnter_var": "主站"
             }
-            _, data = await _request(session, 'POST', "https://gw-c.nowcoder.com/api/sparta/pc/search",
-                                     json=payload, headers={'Content-Type': 'application/json'})
-            _check_api_response(data)
-            # 保存log_id和session_id
-            saved_log_id, saved_session_id = result.log_id, result.session_id
-            result = parse_search_api_data(data, keyword, page)
-            # 恢复log_id和session_id（如果API没有返回）
-            if not result.log_id:
-                result.log_id = saved_log_id
-            if not result.session_id:
-                result.session_id = saved_session_id
+        }
+        _, data = await _request(session, 'POST', "https://gw-c.nowcoder.com/api/sparta/pc/search",
+                                 json=payload, headers={'Content-Type': 'application/json'})
+        _check_api_response(data)
+
+        # 保存从HTML获取的log_id和session_id
+        saved_log_id, saved_session_id = result.log_id, result.session_id
+        result = parse_search_api_data(data, keyword, page)
+
+        # 尝试从API响应中提取log_id和session_id
+        api_data = data.get('data', {})
+        if not result.log_id:
+            result.log_id = api_data.get('logId') or saved_log_id
+        if not result.session_id:
+            result.session_id = api_data.get('sessionId') or saved_session_id
 
         return result
 

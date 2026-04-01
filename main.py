@@ -228,6 +228,9 @@ class NowcoderHelperPlugin(Star):
             }
             self._save_sessions(sessions)
 
+            # 调试日志
+            logger.info(f"Saved session for {sender_id}: log_id={result.log_id}, session_id={result.session_id}")
+
             # 显示搜索结果并进入会话
             response = self._format_search_results(result, keyword, 1, tag_type, order)
             yield event.plain_result(response)

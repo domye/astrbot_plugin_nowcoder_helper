@@ -186,7 +186,9 @@ def parse_search_html(html: str, keyword: str, page: int) -> SearchResult:
 def parse_search_api_data(data: dict, keyword: str, page: int) -> SearchResult:
     """从搜索API响应提取结果"""
     items = []
-    for r in data.get('data', {}).get('records', []):
+    data_obj = data.get('data', {})
+
+    for r in data_obj.get('records', []):
         if not isinstance(r, dict):
             continue
         rd = r.get('data', {})
@@ -209,7 +211,17 @@ def parse_search_api_data(data: dict, keyword: str, page: int) -> SearchResult:
             url='', article_type=article_type
         ))
 
-    total = data.get('data', {}).get('total', 0)
-    pages = data.get('data', {}).get('totalPage', 0) or ((total + 19) // 20 if total else 0)
+    total = data_obj.get('total', 0)
+    pages = data_obj.get('totalPage', 0) or ((total + 19) // 20 if total else 0)
 
-    return SearchResult(keyword=keyword, page=page, items=items, total_pages=pages)
+    # 尝试从API响应中提取log_id和session_id
+    log_id = data_obj.get('logId') or data.get('logId')
+    session_id = data_obj.get('sessionId') or data.get('sessionId')
+
+    result = SearchResult(keyword=keyword, page=page, items=items, total_pages=pages)
+    if log_id:
+        result.log_id = log_id
+    if session_id:
+        result.session_id = session_id
+
+    return result
