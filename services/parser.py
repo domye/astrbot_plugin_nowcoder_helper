@@ -189,18 +189,27 @@ def parse_search_api_data(data: dict, keyword: str, page: int) -> SearchResult:
     items = []
     data_obj = data.get('data', {})
 
-    for r in data_obj.get('records', []):
+    for idx, r in enumerate(data_obj.get('records', [])):
         if not isinstance(r, dict):
             continue
         rd = r.get('data', {})
         if not isinstance(rd, dict):
             continue
 
+        # 调试：输出第一条记录的完整数据结构
+        if idx == 1:  # 第二条记录
+            logging.warning(f"DEBUG Record 1 keys: {rd.keys()}")
+            logging.warning(f"DEBUG Record 1 data: {rd}")
+
         # 按优先级提取数据，确保每个候选都是字典
         candidates = [rd.get('momentData'), rd.get('subjectData'), rd.get('contentData')]
         src = next((c for c in candidates if isinstance(c, dict) and c), None)
         if not src:
             continue
+
+        if idx == 1:
+            logging.warning(f"DEBUG Selected src keys: {src.keys()}")
+            logging.warning(f"DEBUG Selected src: {src}")
 
         # 尝试多个可能的ID字段
         # 1. subjectId / discussId (discuss类型)

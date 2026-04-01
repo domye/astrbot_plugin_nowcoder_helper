@@ -183,6 +183,12 @@ async def fetch_search_results(keyword: str, page: int = 1, log_id: str = None, 
                                  json=payload, headers={'Content-Type': 'application/json'})
         _check_api_response(data)
 
+        # 调试：输出API响应的前两条记录
+        import logging
+        records = data.get('data', {}).get('records', [])
+        if len(records) > 1:
+            logging.warning(f"DEBUG API Record 1 full data: {records[1]}")
+
         saved_log_id, saved_session_id = result.log_id, result.session_id
         result = parse_search_api_data(data, keyword, page)
 
