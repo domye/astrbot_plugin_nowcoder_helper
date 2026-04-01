@@ -12,7 +12,8 @@
       "mcp__js-reverse__navigate_page",
       "mcp__js-reverse__evaluate_script",
       "mcp__js-reverse__get_request_initiator",
-      "Bash(rtk find:*)"
+      "Bash(rtk find:*)",
+      "Bash(rtk ls:*)"
     ]
   }
 }

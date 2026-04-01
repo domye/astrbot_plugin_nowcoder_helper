@@ -242,7 +242,6 @@ async def _handle_select_article(ev: AstrMessageEvent, controller: SessionContro
         return
 
     item = result.items[index - 1]
-    logger.info(f"Selected item: id={item.id}, type={item.article_type}, url={item.to_url()}")
     await ev.send(ev.plain_result("正在获取文章..."))
     article = await fetch_article(item.to_url())
     text, chain = build_article_message(article)

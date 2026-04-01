@@ -158,100 +158,81 @@ def parse_discuss_api_data(data: dict, article_id: str) -> dict:
 
 def parse_search_html(html: str, keyword: str, page: int) -> SearchResult:
     """从搜索页面HTML提取结果"""
-    from astrbot.api import logger
     items = []
 
     # 提取feed文章
     for uuid in set(RE_URL_FEED.findall(html)):
         title_m = re.search(rf'/feed/main/detail/{uuid}[^>]*>([^<]+)<', html)
-        title = title_m.group(1).strip() if title_m else f'Feed-{uuid[:8]}'
         items.append(SearchResultItem(
-            id=uuid, title=title,
+            id=uuid, title=(title_m.group(1).strip() if title_m else f'Feed-{uuid[:8]}'),
             url='', article_type='feed'
         ))
-        logger.info(f"HTML Feed: uuid={uuid}, title={title}")
 
     # 提取discuss文章
     for aid in set(RE_URL_DISCUSS.findall(html)):
         title_m = re.search(rf'/discuss/{aid}[^>]*>([^<]+)<', html)
-        title = title_m.group(1).strip() if title_m else f'Discuss-{aid}'
         items.append(SearchResultItem(
-            id=aid, title=title,
+            id=aid, title=(title_m.group(1).strip() if title_m else f'Discuss-{aid}'),
             url='', article_type='discuss'
         ))
-        logger.info(f"HTML Discuss: aid={aid}, title={title}")
 
     # 总页数
     pager_m = RE_PAGER.search(html)
     pages = max(map(int, RE_PAGE_NUM.findall(pager_m.group(0))), default=0) if pager_m else 0
-
-    logger.info(f"HTML Total items: {len(items)}")
 
     return SearchResult(keyword=unquote(keyword), page=page, items=items, total_pages=pages)
 
 
 def parse_search_api_data(data: dict, keyword: str, page: int) -> SearchResult:
     """从搜索API响应提取结果"""
-    from astrbot.api import logger
     items = []
-    data_obj = data.get('data', {})
-
-    records = data_obj.get('records', [])
-    logger.info(f"API返回记录数: {len(records)}")
-
-    for idx, r in enumerate(records):
+    for r in data.get('data', {}).get('records', []):
         if not isinstance(r, dict):
-            logger.info(f"Record {idx} 不是dict")
             continue
         rd = r.get('data', {})
         if not isinstance(rd, dict):
-            logger.info(f"Record {idx} data不是dict")
             continue
 
-        # 优先使用 contentData，它包含正确的ID
+        # 根据数据源判断类型：momentData -> feed, contentData -> discuss
+        moment_data = rd.get('momentData')
         content_data = rd.get('contentData')
-        if not isinstance(content_data, dict):
-            logger.info(f"Record {idx} contentData不是dict或不存在，keys: {list(rd.keys())}")
-            continue
 
-        # 根据 contentType 判断文章类型
-        content_type = rd.get('contentType', 0)
-        # contentType: 250 是 discuss，其他是 feed
-        if content_type == 250:
-            # discuss 类型：使用 contentData.id（纯数字）
-            item_id = content_data.get('id')
-            article_type = 'discuss'
-        else:
-            # feed 类型：使用 contentData.uuid（十六进制）
-            item_id = content_data.get('uuid')
+        if isinstance(moment_data, dict) and moment_data:
+            # feed 类型：使用 uuid
+            item_id = moment_data.get('uuid')
+            if not item_id:
+                continue
             article_type = 'feed'
-
-        if not item_id:
-            logger.info(f"Record {idx} item_id为空")
+            title = moment_data.get('title')
+        elif isinstance(content_data, dict) and content_data:
+            # discuss 类型：使用数字 id（不是 uuid）
+            item_id = str(content_data.get('id', ''))
+            if not item_id:
+                continue
+            article_type = 'discuss'
+            title = content_data.get('title')
+        else:
             continue
-
-        title = content_data.get('title') or f'文章-{str(item_id)[:8]}'
-
-        if idx < 5:  # 输出前5条用于调试
-            logger.info(f"API Item {idx}: id={item_id}, type={article_type}, contentType={content_type}, title={title}")
 
         items.append(SearchResultItem(
-            id=str(item_id), title=title,
+            id=str(item_id), title=title or f'文章-{str(item_id)[:8]}',
             url='', article_type=article_type
         ))
 
-    logger.info(f"API解析成功条数: {len(items)}")
-
-    total = data_obj.get('total', 0)
-    pages = data_obj.get('totalPage', 0) or ((total + 19) // 20 if total else 0)
+    total = data.get('data', {}).get('total', 0)
+    pages = data.get('data', {}).get('totalPage', 0) or ((total + 19) // 20 if total else 0)
 
     # 尝试从API响应中提取log_id和session_id
-    log_id = data_obj.get('logId') or data.get('logId')
-    session_id = data_obj.get('sessionId') or data.get('sessionId')
+    log_id = data.get('data', {}).get('logId') or data.get('logId')
+    session_id = data.get('data', {}).get('sessionId') or data.get('sessionId')
 
     result = SearchResult(keyword=keyword, page=page, items=items, total_pages=pages)
     if log_id:
         result.log_id = log_id
+    if session_id:
+        result.session_id = session_id
+
+    return result
     if session_id:
         result.session_id = session_id
 
