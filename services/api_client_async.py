@@ -195,7 +195,14 @@ async def fetch_search_results(keyword: str, page: int = 1, log_id: str = None, 
             _, data = await _request(session, 'POST', "https://gw-c.nowcoder.com/api/sparta/pc/search",
                                      json=payload, headers={'Content-Type': 'application/json'})
             _check_api_response(data)
+            # 保存log_id和session_id
+            saved_log_id, saved_session_id = result.log_id, result.session_id
             result = parse_search_api_data(data, keyword, page)
+            # 恢复log_id和session_id（如果API没有返回）
+            if not result.log_id:
+                result.log_id = saved_log_id
+            if not result.session_id:
+                result.session_id = saved_session_id
 
         return result
 
