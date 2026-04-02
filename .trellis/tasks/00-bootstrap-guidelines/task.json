@@ -2,26 +2,26 @@
   "id": "00-bootstrap-guidelines",
   "name": "Bootstrap Guidelines",
   "description": "Fill in project development guidelines for AI agents",
-  "status": "in_progress",
+  "status": "completed",
   "dev_type": "docs",
   "priority": "P1",
   "creator": "domye",
   "assignee": "domye",
   "createdAt": "2026-04-01",
-  "completedAt": null,
+  "completedAt": "2026-04-02",
   "commit": null,
   "subtasks": [
     {
       "name": "Fill backend guidelines",
-      "status": "pending"
+      "status": "completed"
     },
     {
       "name": "Fill frontend guidelines",
-      "status": "pending"
+      "status": "completed"
     },
     {
       "name": "Add code examples",
-      "status": "pending"
+      "status": "completed"
     }
   ],
   "children": [],
@@ -30,6 +30,6 @@
     ".trellis/spec/backend/",
     ".trellis/spec/frontend/"
   ],
-  "notes": "First-time setup task created by trellis init (fullstack project)",
+  "notes": "First-time setup task created by trellis init (fullstack project). Backend guidelines complete with project examples. Frontend marked as N/A (pure backend project).",
   "meta": {}
 }

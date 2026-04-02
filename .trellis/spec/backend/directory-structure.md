@@ -310,6 +310,89 @@ import requests  # Use AstrBot's platform adapters instead
 
 ---
 
+## Project-Specific Example: nowcoder-helper-astrbot
+
+This project uses the **Moderate Plugin (Services Module)** pattern:
+
+```
+nowcoder-helper-astrbot/
+├── main.py                    # Entry point (Star class)
+├── metadata.yaml              # Plugin metadata
+├── handlers/                  # Event handlers (separated for clarity)
+│   ├── __init__.py
+│   ├── search_handler.py      # Search + multi-turn dialogue
+│   └── article_handler.py     # Article URL handler
+└── services/                  # Business logic
+    ├── __init__.py            # Re-exports for clean imports
+    ├── api_client.py          # Async HTTP client (aiohttp)
+    ├── parser.py              # HTML/JSON parsing
+    ├── formatter.py           # Message formatting
+    ├── models.py              # Data models (dataclasses)
+    ├── session_manager.py     # User session persistence
+    └── constants.py           # Configuration constants
+```
+
+### Key Files in This Project
+
+**main.py** (Entry Point):
+```python
+@register("nowcoder_helper", "domye", "智能获取牛客文章", "1.0.0")
+class NowcoderHelperPlugin(Star):
+    def __init__(self, context: Context):
+        super().__init__(context)
+        data_path = Path(get_astrbot_data_path()) / "plugin_data" / "nowcoder_helper"
+        self.session_manager = SessionManager(data_path)
+
+    @filter.regex(r'^牛客')
+    async def nowcoder(self, event: AstrMessageEvent):
+        """智能获取牛客文章。用法: 牛客 <关键词> [筛选类型] [排序方式]"""
+        full_msg = event.message_str.strip()
+        msg = full_msg[2:].strip() if full_msg.startswith('牛客') else full_msg
+        async for result in handle_search(event, msg, self.session_manager):
+            yield result
+```
+
+**services/models.py** (Data Models):
+```python
+@dataclass
+class Article:
+    """文章数据模型"""
+    id: str
+    title: str
+    author: str
+    content: str
+    url: str
+    post_time: Optional[str] = None
+    feed_images: List[str] = field(default_factory=list)
+    view_count: int = 0
+    article_type: str = 'unknown'
+
+@dataclass
+class SearchResultItem:
+    """搜索结果项"""
+    id: str
+    title: str
+    url: str
+    article_type: str
+
+    def to_url(self) -> str:
+        """生成完整URL"""
+        base = "https://www.nowcoder.com"
+        return f"{base}/feed/main/detail/{self.id}" if self.article_type == 'feed' else f"{base}/discuss/{self.id}"
+```
+
+**services/__init__.py** (Clean Re-exports):
+```python
+from .api_client import fetch_article, fetch_search_results, fetch_articles, close_session
+from .parser import parse_url_type, parse_feed_html, parse_discuss_api_data
+from .formatter import build_article_message, format_search_results, format_help_message
+from .models import Article, SearchResult, SearchResultItem
+from .session_manager import SessionManager, SearchSession
+from .constants import SEARCH_TAG_IDS, SEARCH_ORDER_TYPES, RE_NOWCODER_URL
+```
+
+---
+
 ## Checklist for New Plugins
 
 - [ ] `main.py` exists with Star class

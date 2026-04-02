@@ -6,7 +6,19 @@
 
 ## Overview
 
-This directory contains guidelines for frontend development. Fill in each file with your project's specific conventions.
+**This project is a pure backend AstrBot Plugin and does not have a frontend component.**
+
+The frontend guidelines are provided for reference but are not applicable to this project.
+
+---
+
+## Project Type
+
+| Aspect | Status |
+|--------|--------|
+| Frontend Code | ❌ None |
+| Backend Code | ✅ AstrBot Plugin (Python) |
+| Full-stack | ❌ Not applicable |
 
 ---
 
@@ -14,26 +26,19 @@ This directory contains guidelines for frontend development. Fill in each file w
 
 | Guide | Description | Status |
 |-------|-------------|--------|
-| [Directory Structure](./directory-structure.md) | Module organization and file layout | To fill |
-| [Component Guidelines](./component-guidelines.md) | Component patterns, props, composition | To fill |
-| [Hook Guidelines](./hook-guidelines.md) | Custom hooks, data fetching patterns | To fill |
-| [State Management](./state-management.md) | Local state, global state, server state | To fill |
-| [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | To fill |
-| [Type Safety](./type-safety.md) | Type patterns, validation | To fill |
-
----
-
-## How to Fill These Guidelines
-
-For each guideline file:
-
-1. Document your project's **actual conventions** (not ideals)
-2. Include **code examples** from your codebase
-3. List **forbidden patterns** and why
-4. Add **common mistakes** your team has made
-
-The goal is to help AI assistants and new team members understand how YOUR project works.
+| [Directory Structure](./directory-structure.md) | Module organization and file layout | ✅ N/A (no frontend) |
+| [Component Guidelines](./component-guidelines.md) | Component patterns, props, composition | ✅ N/A (no frontend) |
+| [Hook Guidelines](./hook-guidelines.md) | Custom hooks, data fetching patterns | ✅ N/A (no frontend) |
+| [State Management](./state-management.md) | Local state, global state, server state | ✅ N/A (no frontend) |
+| [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | ✅ N/A (no frontend) |
+| [Type Safety](./type-safety.md) | Type patterns, validation | ✅ N/A (no frontend) |
 
 ---
 
 **Language**: All documentation should be written in **English**.
+
+---
+
+## Note
+
+If a frontend is added in the future, these guidelines should be updated with actual project conventions at that time.

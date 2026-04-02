@@ -510,6 +510,54 @@ class CompleteExamplePlugin(Star):
 
 ---
 
+## Project Example: nowcoder-helper-astrbot
+
+### Registration
+
+```python
+# main.py
+@register("nowcoder_helper", "domye", "智能获取牛客文章", "1.0.0")
+class NowcoderHelperPlugin(Star):
+    def __init__(self, context: Context):
+        super().__init__(context)
+        data_path = Path(get_astrbot_data_path()) / "plugin_data" / "nowcoder_helper"
+        self.session_manager = SessionManager(data_path)
+
+    async def initialize(self):
+        """插件初始化"""
+        logger.info("Nowcoder Helper Plugin initialized")
+
+    async def terminate(self):
+        """插件销毁"""
+        await close_session()
+        logger.info("Nowcoder Helper Plugin terminated")
+```
+
+### metadata.yaml
+
+```yaml
+name: nowcoder_helper
+display_name: 牛客文章助手
+desc: 获取牛客文章并以 Markdown 格式返回
+version: v1.0.1
+author: domye
+repo: https://github.com/domye/nowcoder-helper-astrbot
+```
+
+### Handler Pattern (Regex Trigger)
+
+```python
+@filter.regex(r'^牛客')
+async def nowcoder(self, event: AstrMessageEvent):
+    """智能获取牛客文章。用法: 牛客 <关键词> [筛选类型] [排序方式]"""
+    full_msg = event.message_str.strip()
+    msg = full_msg[2:].strip() if full_msg.startswith('牛客') else full_msg
+    async for result in handle_search(event, msg, self.session_manager):
+        yield result
+```
+
+---
+
 ## Checklist
 
 - [ ] Star class inherits from `Star`

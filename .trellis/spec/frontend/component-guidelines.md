@@ -6,54 +6,28 @@
 
 ## Overview
 
-<!--
-Document your project's component conventions here.
+**Not Applicable**: This project is a pure backend AstrBot Plugin with no frontend code.
 
-Questions to answer:
-- What component patterns do you use?
-- How are props defined?
-- How do you handle composition?
-- What accessibility standards apply?
--->
-
-(To be filled by the team)
+No component patterns are defined because there is no UI layer.
 
 ---
 
-## Component Structure
+## Project Type
 
-<!-- Standard structure of a component file -->
-
-(To be filled by the team)
-
----
-
-## Props Conventions
-
-<!-- How props should be defined and typed -->
-
-(To be filled by the team)
+| Aspect | Status |
+|--------|--------|
+| Frontend Framework | ❌ None |
+| Component Library | ❌ None |
+| UI Layer | ❌ Backend only |
 
 ---
 
-## Styling Patterns
+## Note
 
-<!-- How styles are applied (CSS modules, styled-components, Tailwind, etc.) -->
-
-(To be filled by the team)
+If a frontend is added in the future, component guidelines should be defined based on the chosen framework (React, Vue, etc.).
 
 ---
 
-## Accessibility
+## Related Guidelines
 
-<!-- A11y requirements and patterns -->
-
-(To be filled by the team)
-
----
-
-## Common Mistakes
-
-<!-- Component-related mistakes your team has made -->
-
-(To be filled by the team)
+For backend patterns, see [Backend Quality Guidelines](../backend/quality-guidelines.md).

@@ -6,46 +6,43 @@
 
 ## Overview
 
-<!--
-Document your project's quality standards here.
+**Not Applicable**: This project is a pure backend AstrBot Plugin with no frontend code.
 
-Questions to answer:
-- What patterns are forbidden?
-- What linting rules do you enforce?
-- What are your testing requirements?
-- What code review standards apply?
--->
-
-(To be filled by the team)
+No frontend quality guidelines are defined.
 
 ---
 
-## Forbidden Patterns
+## Project Type
 
-<!-- Patterns that should never be used and why -->
-
-(To be filled by the team)
-
----
-
-## Required Patterns
-
-<!-- Patterns that must always be used -->
-
-(To be filled by the team)
+| Aspect | Status |
+|--------|--------|
+| Frontend Linting | ❌ None |
+| Frontend Testing | ❌ None |
+| Backend Linting | ✅ Python (ruff/flake8) |
+| Backend Testing | ✅ pytest |
 
 ---
 
-## Testing Requirements
+## Backend Quality Standards
 
-<!-- What level of testing is expected -->
+For backend quality guidelines, see:
 
-(To be filled by the team)
+- [Backend Quality Guidelines](../backend/quality-guidelines.md) - Code standards, async patterns
+- [Backend Error Handling](../backend/error-handling.md) - Exception patterns
+- [Backend Logging Guidelines](../backend/logging-guidelines.md) - AstrBot logger usage
 
 ---
 
-## Code Review Checklist
+## Backend Quality Checklist
 
-<!-- What reviewers should check -->
+From the backend guidelines:
 
-(To be filled by the team)
+- [ ] All handlers have docstrings
+- [ ] All handlers use async/await
+- [ ] All handlers use yield (not return)
+- [ ] Type hints on all functions
+- [ ] Error handling in all handlers
+- [ ] No global variables
+- [ ] No blocking operations in async
+- [ ] Files under size limits
+- [ ] Linting passes (ruff/flake8)

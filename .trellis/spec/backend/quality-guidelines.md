@@ -624,6 +624,122 @@ async def test_service_handle():
 
 ---
 
+## Project Example: Async Patterns
+
+This project (`services/api_client.py`) demonstrates production-ready async patterns:
+
+### Global Connection Pool
+
+```python
+# services/api_client.py
+_global_session = None
+
+async def get_session() -> aiohttp.ClientSession:
+    """获取全局连接池"""
+    global _global_session
+    if _global_session is None or _global_session.closed:
+        connector = aiohttp.TCPConnector(
+            limit=10,
+            limit_per_host=5,
+            enable_cleanup_closed=True,
+            force_close=False
+        )
+        _global_session = aiohttp.ClientSession(
+            connector=connector,
+            timeout=aiohttp.ClientTimeout(total=10)
+        )
+    return _global_session
+
+
+async def close_session():
+    """关闭全局连接池"""
+    global _global_session
+    if _global_session and not _global_session.closed:
+        await _global_session.close()
+        _global_session = None
+```
+
+### Concurrent Requests
+
+```python
+async def fetch_feed_article(session: aiohttp.ClientSession, uuid: str) -> Article:
+    """获取feed类型文章（并发请求）"""
+    tdk_url = f"https://gw-c.nowcoder.com/api/sparta/content-terminal-tdk/moments?uuid={uuid}&t="
+    page_url = f"https://www.nowcoder.com/feed/main/detail/{uuid}"
+
+    # 并发请求两个 API
+    tdk_task = _request(session, 'GET', tdk_url, headers={'Accept': 'application/json'})
+    page_task = _request(session, 'GET', page_url)
+
+    (_, tdk_data), (html, _) = await asyncio.gather(tdk_task, page_task)
+
+    _check_api_response(tdk_data)
+
+    data = parse_feed_html(html, uuid)
+    data.update({
+        'title': tdk_data['data'].get('title'),
+        'keywords': tdk_data['data'].get('keywords'),
+        'description': tdk_data['data'].get('description')
+    })
+    return Article(**data)
+```
+
+### Pre-compiled Regex
+
+```python
+# services/parser.py
+# 预编译正则（性能优化）
+RE_URL_DISCUSS = re.compile(r'/discuss/(\d+)')
+RE_URL_FEED = re.compile(r'/feed/main/detail/([a-f0-9]+)')
+RE_FEED_CONTENT = re.compile(r'<div class="feed-content-text[^"]*"[^>]*>(.*?)</div>', re.DOTALL)
+RE_FEED_IMG = re.compile(r'"imgMoment":\s*(\[[^\]]+\])')
+RE_FEED_AUTHOR = re.compile(r'class="name-text[^>]*>([^<]+)<')
+RE_NEWLINES = re.compile(r'\n{3,}')
+```
+
+### Dataclass Usage
+
+```python
+# services/models.py
+@dataclass
+class Article:
+    """文章数据模型"""
+    id: str
+    title: str
+    author: str
+    content: str
+    url: str
+    post_time: Optional[str] = None
+    identity: Optional[str] = None
+    rich_content: Optional[str] = None
+    feed_images: List[str] = field(default_factory=list)
+    view_count: int = 0
+    like_count: int = 0
+    comment_count: int = 0
+    keywords: Optional[str] = None
+    description: Optional[str] = None
+    author_id: Optional[str] = None
+    education: Optional[str] = None
+    article_type: str = 'unknown'
+
+
+@dataclass
+class SearchResultItem:
+    """搜索结果项"""
+    id: str
+    title: str
+    url: str
+    article_type: str
+    snippet: Optional[str] = None
+
+    def to_url(self) -> str:
+        """生成完整URL"""
+        base = "https://www.nowcoder.com"
+        return f"{base}/feed/main/detail/{self.id}" if self.article_type == 'feed' else f"{base}/discuss/{self.id}"
+```
+
+---
+
 ## Quality Checklist
 
 ### Code Structure

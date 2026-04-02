@@ -558,6 +558,156 @@ async def fetch(self, event: AstrMessageEvent):
 
 ---
 
+## Project Example: Multi-turn Dialogue
+
+This project demonstrates a complete multi-turn dialogue pattern in `handlers/search_handler.py`:
+
+### Search Flow
+
+```
+User: 牛客 阿里
+  ↓
+Bot: 搜索结果列表 (第1页/共5页)
+     输入编号查看文章，'下一页'翻页
+  ↓
+User: 3
+  ↓
+Bot: [文章内容]
+  ↓
+User: 下一页
+  ↓
+Bot: 搜索结果列表 (第2页/共5页)
+```
+
+### Implementation Pattern
+
+```python
+# handlers/search_handler.py
+async def handle_search(event: AstrMessageEvent, message: str, session_manager: SessionManager):
+    """处理搜索请求，启动多轮对话"""
+    sender_id = event.get_sender_id()
+
+    # 检查是否有未完成的会话
+    if session_manager.exists(sender_id):
+        yield event.plain_result("你有未完成的搜索会话，请继续选择或发送'退出'")
+        return
+
+    # 执行搜索
+    result = await fetch_search_results(keyword, page=1, tag_type=tag_type, order=order)
+
+    # 保存会话状态
+    session = SearchSession(
+        keyword=keyword,
+        tag_type=tag_type,
+        order=order,
+        current_page=1,
+        total_pages=result.total_pages,
+        log_id=result.log_id,
+        session_id=result.session_id
+    )
+    session_manager.set(sender_id, session)
+
+    # 显示搜索结果
+    response = format_search_results(result, keyword, 1, tag_type, order)
+    yield event.plain_result(response)
+
+    # 启动会话等待
+    async for result in handle_search_session(event, sender_id, session_manager):
+        yield result
+
+
+async def handle_search_session(event: AstrMessageEvent, sender_id: str, session_manager: SessionManager):
+    """处理多轮搜索对话"""
+    @session_waiter(timeout=60, record_history_chains=False)
+    async def select_article(controller: SessionController, ev: AstrMessageEvent):
+        user_msg = ev.message_str.strip()
+
+        # 退出
+        if user_msg == "退出":
+            session_manager.remove(sender_id)
+            await ev.send(ev.plain_result("已退出"))
+            controller.stop()
+            return
+
+        session = session_manager.get(sender_id)
+        if not session:
+            await ev.send(ev.plain_result("会话已失效，请重新搜索"))
+            controller.stop()
+            return
+
+        # 翻页
+        if user_msg in ("下一页", "next"):
+            await _handle_next_page(ev, controller, session, session_manager, sender_id)
+            return
+
+        if user_msg in ("上一页", "prev"):
+            await _handle_prev_page(ev, controller, session, session_manager, sender_id)
+            return
+
+        # 选择文章
+        try:
+            index = int(user_msg)
+            await _handle_select_article(ev, controller, session, session_manager, sender_id, index)
+        except ValueError:
+            session_manager.remove(sender_id)
+            await ev.send(ev.plain_result("输入无效，已自动退出搜索"))
+            controller.stop()
+
+    try:
+        await select_article(event)
+    except TimeoutError:
+        session_manager.remove(sender_id)
+        yield event.plain_result("会话超时，已退出")
+    finally:
+        event.stop_event()
+```
+
+### Session State Management
+
+```python
+# services/session_manager.py
+@dataclass
+class SearchSession:
+    """搜索会话状态"""
+    keyword: str
+    tag_type: Optional[str] = None
+    order: str = ''
+    current_page: int = 1
+    total_pages: int = 1
+    log_id: Optional[str] = None
+    session_id: Optional[str] = None
+
+
+class SessionManager:
+    """会话管理器 - 持久化到 JSON 文件"""
+
+    def __init__(self, data_path: Path):
+        self.sessions_file = data_path / "sessions.json"
+        self._ensure_file()
+
+    def get(self, user_id: str) -> Optional[SearchSession]:
+        """获取用户会话"""
+        data = self._load()
+        if user_id in data:
+            return SearchSession(**data[user_id])
+        return None
+
+    def set(self, user_id: str, session: SearchSession):
+        """设置用户会话"""
+        data = self._load()
+        data[user_id] = asdict(session)
+        self._save(data)
+
+    def remove(self, user_id: str):
+        """移除用户会话"""
+        data = self._load()
+        if user_id in data:
+            del data[user_id]
+            self._save(data)
+```
+
+---
+
 ## Checklist
 
 - [ ] Import `filter` from `astrbot.api.event`

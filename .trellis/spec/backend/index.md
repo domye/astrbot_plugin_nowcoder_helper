@@ -53,4 +53,20 @@ Before writing any plugin code, read these documents:
 
 ---
 
-**Language**: All documentation is written in **English** with code examples from AstrBot docs.
+## Project-Specific Examples
+
+This plugin (`nowcoder-helper-astrbot`) demonstrates the patterns documented here:
+
+| Pattern | Example File | Description |
+|---------|-------------|-------------|
+| Async API Client | `services/api_client.py` | aiohttp with connection pooling |
+| Data Models | `services/models.py` | dataclasses for Article, SearchResult |
+| Session Management | `services/session_manager.py` | Persistent user session state |
+| HTML Parsing | `services/parser.py` | Pre-compiled regex, HTML extraction |
+| Multi-turn Dialogue | `handlers/search_handler.py` | session_waiter for interactive search |
+| Message Formatting | `services/formatter.py` | MessageChain with images |
+| Event Handlers | `handlers/article_handler.py` | URL detection and article fetch |
+
+---
+
+**Language**: All documentation is written in **English** with code examples from AstrBot docs and this project.

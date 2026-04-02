@@ -6,49 +6,30 @@
 
 ## Overview
 
-<!--
-Document your project's frontend directory structure here.
-
-Questions to answer:
-- Where do components live?
-- How are features/modules organized?
-- Where are shared utilities?
-- How are assets organized?
--->
-
-(To be filled by the team)
+**Not Applicable**: This project is a pure backend AstrBot Plugin with no frontend code.
 
 ---
 
-## Directory Layout
+## Project Architecture
 
 ```
-<!-- Replace with your actual structure -->
-src/
-├── ...
-└── ...
+nowcoder-helper-astrbot/
+├── main.py                   # Backend: Plugin entry point
+├── metadata.yaml             # Backend: Plugin metadata
+├── handlers/                 # Backend: Event handlers
+└── services/                 # Backend: Business logic
 ```
 
----
-
-## Module Organization
-
-<!-- How should new features be organized? -->
-
-(To be filled by the team)
+No frontend directory exists.
 
 ---
 
-## Naming Conventions
+## Note
 
-<!-- File and folder naming rules -->
-
-(To be filled by the team)
+If frontend development is needed in the future (e.g., a web dashboard for plugin configuration), refer to standard frontend patterns and create appropriate guidelines at that time.
 
 ---
 
-## Examples
+## Related Guidelines
 
-<!-- Link to well-organized modules as examples -->
-
-(To be filled by the team)
+For backend directory structure, see [Backend Directory Structure](../backend/directory-structure.md).

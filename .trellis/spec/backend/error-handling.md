@@ -529,6 +529,93 @@ class RobustPlugin(Star):
 
 ---
 
+## Project Example: Error Handling Patterns
+
+This project demonstrates comprehensive error handling in `handlers/search_handler.py`:
+
+### Handler Error Pattern
+
+```python
+async def handle_search(event: AstrMessageEvent, message: str, session_manager: SessionManager):
+    """处理搜索请求，启动多轮对话"""
+    sender_id = event.get_sender_id()
+
+    # 检查是否有未完成的会话
+    if session_manager.exists(sender_id):
+        yield event.plain_result("你有未完成的搜索会话，请继续选择或发送'退出'")
+        return
+
+    # 无参数：显示帮助
+    if not message:
+        yield event.plain_result(format_help_message())
+        return
+
+    # 检测是否为链接
+    url = extract_url_from_message(message)
+    if url:
+        from .article_handler import handle_article_url
+        async for result in handle_article_url(event, url):
+            yield result
+        return
+
+    # 执行搜索
+    try:
+        result = await fetch_search_results(keyword, page=1, tag_type=tag_type, order=order)
+
+        if not result.items:
+            yield event.plain_result(f"未找到相关文章: {search_info}")
+            return
+
+        # ... success handling ...
+
+    except Exception as e:
+        logger.error(f"Search failed: {e}")
+        yield event.plain_result(f"搜索失败: {str(e)}")
+```
+
+### API Client Error Pattern
+
+```python
+# services/api_client.py
+def _check_api_response(data):
+    """检查API响应"""
+    if not data or not data.get('success'):
+        raise Exception(data.get('msg', 'API返回错误') if data else 'API返回空数据')
+
+
+async def fetch_article(url: str) -> Article:
+    """根据URL类型获取文章"""
+    url_type, article_id = parse_url_type(url)
+    if url_type not in FETCHERS:
+        raise ValueError(f"无法识别的URL格式: {url}")
+
+    session = await get_session()
+    return await FETCHERS[url_type](session, article_id)
+```
+
+### Article Handler Error Pattern
+
+```python
+# handlers/article_handler.py
+async def handle_article_url(event: AstrMessageEvent, url: str):
+    """处理文章URL"""
+    try:
+        yield event.plain_result("正在获取文章...")
+        article = await fetch_article(url)
+        text, chain = build_article_message(article)
+        if chain:
+            yield event.chain_result(chain)
+        else:
+            yield event.plain_result(text)
+    except ValueError:
+        yield event.plain_result("无效的URL格式")
+    except Exception as e:
+        logger.error(f"Failed to fetch article: {e}")
+        yield event.plain_result(f"获取文章失败: {str(e)}")
+```
+
+---
+
 ## Checklist
 
 - [ ] All handlers have try/except blocks

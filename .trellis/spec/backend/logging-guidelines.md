@@ -558,6 +558,85 @@ class LoggedPlugin(Star):
 
 ---
 
+## Project Example: Logging Patterns
+
+This project demonstrates proper logging usage:
+
+### Handler Logging
+
+```python
+# handlers/search_handler.py
+async def handle_search(event: AstrMessageEvent, message: str, session_manager: SessionManager):
+    """处理搜索请求，启动多轮对话"""
+    # ... code ...
+    try:
+        # ... search logic ...
+        logger.info(f"Saved session for {sender_id}: log_id={result.log_id}, session_id={result.session_id}")
+        # ...
+    except Exception as e:
+        logger.error(f"Search failed: {e}")
+        yield event.plain_result(f"搜索失败: {str(e)}")
+
+
+async def _handle_next_page(ev: AstrMessageEvent, controller: SessionController,
+                            session: SearchSession, session_manager: SessionManager, sender_id: str):
+    """处理下一页"""
+    # ...
+    try:
+        # ...
+    except Exception as e:
+        await ev.send(ev.plain_result(f"翻页失败: {e}"))
+        controller.keep(timeout=60, reset_timeout=True)
+```
+
+### Article Handler Logging
+
+```python
+# handlers/article_handler.py
+async def handle_article_url(event: AstrMessageEvent, url: str):
+    """处理文章URL"""
+    try:
+        yield event.plain_result("正在获取文章...")
+        article = await fetch_article(url)
+        text, chain = build_article_message(article)
+        if chain:
+            yield event.chain_result(chain)
+        else:
+            yield event.plain_result(text)
+    except ValueError:
+        yield event.plain_result("无效的URL格式")
+    except Exception as e:
+        logger.error(f"Failed to fetch article: {e}")
+        yield event.plain_result(f"获取文章失败: {str(e)}")
+```
+
+### Plugin Lifecycle Logging
+
+```python
+# main.py
+async def initialize(self):
+    """插件初始化"""
+    logger.info("Nowcoder Helper Plugin initialized")
+
+async def terminate(self):
+    """插件销毁"""
+    await close_session()
+    logger.info("Nowcoder Helper Plugin terminated")
+```
+
+### Parser Debug Logging
+
+```python
+# services/parser.py
+def parse_search_api_data(data: dict, keyword: str, page: int) -> SearchResult:
+    """从搜索API响应提取结果"""
+    # ... parsing logic ...
+    # Note: Debug logging would be added during development:
+    # logger.debug(f"Parsing search results for {keyword}: found {len(items)} items")
+```
+
+---
+
 ## Checklist
 
 - [ ] Import logger from `astrbot` (not `logging` module)
