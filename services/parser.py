@@ -233,7 +233,3 @@ def parse_search_api_data(data: dict, keyword: str, page: int) -> SearchResult:
         result.session_id = session_id
 
     return result
-    if session_id:
-        result.session_id = session_id
-
-    return result
